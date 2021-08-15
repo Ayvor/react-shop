@@ -1,13 +1,10 @@
 import axios from 'axios';
 import React, { useState } from 'react';
 import Card from '../components/Card';
-import AppContext from '../context';
 
 const Orders = () => {
   const [orders, setOrders] = React.useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const { onAddToCart, onAddToFavorite } = React.useContext(AppContext);
 
   React.useEffect(() => {
     (async () => {
@@ -17,6 +14,7 @@ const Orders = () => {
         setIsLoading(false);
       } catch (error) {
         alert('Ошибка при запросе заказов');
+        console.error(error);
       }
     })();
   }, []);
@@ -27,16 +25,9 @@ const Orders = () => {
       </div>
 
       <div className="d-flex flex-wrap">
-        {(isLoading ? [...Array(8)] : orders).map((item, index) => {
-          return (
-            <Card
-              key={index}
-              onFavorite={(obj) => onAddToFavorite(obj)}
-              loading={isLoading}
-              {...item}
-            />
-          );
-        })}
+        {(isLoading ? [...Array(8)] : orders).map((item, index) => (
+          <Card key={index} loading={isLoading} {...item} />
+        ))}
       </div>
     </div>
   );
