@@ -1,6 +1,5 @@
 body {
   margin: 0;
-  font-family: 'Inter', system-ui;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #e7f6ff;
@@ -11,7 +10,7 @@ body {
 }
 
 .wrapper {
-  background-color: #ffffff;
+  background: #ffffff;
   box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.04);
   border-radius: 20px;
   max-width: 1080px;
@@ -46,10 +45,47 @@ header {
   cursor: pointer;
 }
 
+.cartEmpty {
+  text-align: center;
+
+  p {
+    width: 280px;
+    line-height: 24px;
+  }
+
+  .greenButton {
+    width: 245px;
+    margin-top: 20px;
+
+    &:hover {
+      img {
+        transform: rotate(180deg) translateX(3px);
+      }
+    }
+
+    img {
+      position: relative;
+      top: 1px;
+      transform: rotate(180deg);
+      margin-right: 15px;
+      transition: transform 0.15s ease-in-out;
+    }
+  }
+}
+
 .search-block {
   border: 1px solid #f3f3f3;
   border-radius: 10px;
   padding: 0 15px;
+  position: relative;
+
+  .clear {
+    position: absolute;
+    top: 13px;
+    right: 15px;
+    width: 18px;
+    height: 18px;
+  }
 
   input {
     border: 0;
@@ -66,10 +102,13 @@ header {
   height: 100%;
   background: #ffffff;
   box-shadow: -10px 4px 24px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  padding: 30px;
 
   display: flex;
   flex-direction: column;
+
+  // transform: translateX(100%);
+  // transition: transform 0.3s ease-out;
 
   .items {
     flex: 1;
@@ -90,7 +129,21 @@ header {
   z-index: 1;
   width: 100%;
   height: 100%;
+
+  // visibility: hidden;
+  // opacity: 0;
+  // transition: opacity 0.1s ease-out, visibility 0.1s ease-out;
+  // overflow: hidden;
 }
+
+// .overlayVisible {
+//   visibility: visible;
+//   opacity: 1;
+
+//   .drawer {
+//     transform: translateX(0);
+//   }
+// }
 
 .cartTotalBlock {
   ul {
@@ -114,6 +167,10 @@ header {
 
   .greenButton {
     position: relative;
+
+    &:disabled {
+      animation: button-loading 0.6s ease-in-out infinite;
+    }
 
     &:hover {
       img {
@@ -143,6 +200,11 @@ header {
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s ease-in-out;
+
+  &:disabled {
+    background-color: #bebebe !important ;
+    cursor: default;
+  }
 
   &:hover {
     background: lighten(#9dd558, 5%);
@@ -189,5 +251,17 @@ header {
         opacity: 1;
       }
     }
+  }
+}
+
+@keyframes button-loading {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
   }
 }

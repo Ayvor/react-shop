@@ -1,119 +1,155 @@
-import Card from './components/Card';
 import Header from './components/Header';
 import Drawer from './components/Drawer';
-import React, { useState } from 'react';
+import Home from './pages/Home';
+import Favorites from './pages/Favorites';
+import AppContext from './context';
 
-// const arr = [
-//   {
-//     title: 'Мужские Кроссовки Nike Blazer Mid Suede',
-//     price: 12999,
-//     imageUrl: '/img/sneakers/1.jpg',
-//   },
-//   { title: 'Мужские Кроссовки Nike Air Max 270', price: 15600, imageUrl: '/img/sneakers/2.jpg' },
-//   {
-//     title: 'Мужские Кроссовки Nike Blazer Mid Suede',
-//     price: 8500,
-//     imageUrl: '/img/sneakers/3.jpg',
-//   },
-//   { title: 'Кроссовки Puma X Aka Boku Future Rider', price: 9000, imageUrl: '/img/sneakers/4.jpg' },
-// ];
-
-/* [
-  { "title": "Мужские Кроссовки Nike Blazer Mid Suede", "price": 12999, "imageUrl": "/img/sneakers/1.jpg" },
-  { "title": "Мужские Кроссовки Nike Air Max 270", "price": 15600, "imageUrl": "/img/sneakers/2.jpg" },
-  { "title": "Мужские Кроссовки Nike Blazer Mid Suede", "price": 8500, "imageUrl": "/img/sneakers/3.jpg" },
-  { "title": "Кроссовки Puma X Aka Boku Future Rider", "price": 9000, "imageUrl": "/img/sneakers/4.jpg" },
-  { "title": "Мужские Кроссовки Under Armour Curry 8", "price": 15999, "imageUrl": "/img/sneakers/5.jpg" },
-  { "title": "Мужские Кроссовки Nike Kyrie 7", "price": 11599, "imageUrl": "/img/sneakers/6.jpg" },
-  { "title": "Мужские Кроссовки Jordan Air Jordan 11", "price": 10700, "imageUrl": "/img/sneakers/7.jpg" },
-  { "title": "Мужские Кроссовки Nike LeBron XVIII", "price": 16499, "imageUrl": "/img/sneakers/8.jpg" }
-] */
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Route } from 'react-router-dom';
+import Orders from './pages/Orders';
 
 function App() {
   const [items, setItems] = useState([]);
-  /* [
-    {
-      title: 'Мужские Кроссовки Nike Blazer Mid Suede',
-      price: 12999,
-      imageUrl: '/img/sneakers/1.jpg',
-    },
-    { title: 'Мужские Кроссовки Nike Air Max 270', price: 15600, imageUrl: '/img/sneakers/2.jpg' },
-    {
-      title: 'Мужские Кроссовки Nike Blazer Mid Suede',
-      price: 8500,
-      imageUrl: '/img/sneakers/3.jpg',
-    },
-    {
-      title: 'Кроссовки Puma X Aka Boku Future Rider',
-      price: 9000,
-      imageUrl: '/img/sneakers/4.jpg',
-    },
-    {
-      title: 'Мужские Кроссовки Under Armour Curry 8',
-      price: 15999,
-      imageUrl: '/img/sneakers/5.jpg',
-    },
-    { title: 'Мужские Кроссовки Nike Kyrie 7', price: 11599, imageUrl: '/img/sneakers/6.jpg' },
-    {
-      title: 'Мужские Кроссовки Jordan Air Jordan 11',
-      price: 10700,
-      imageUrl: '/img/sneakers/7.jpg',
-    },
-    { title: 'Мужские Кроссовки Nike LeBron XVIII', price: 16499, imageUrl: '/img/sneakers/8.jpg' },
-  ]  );*/
-
   const [cartOpened, setCartOpened] = useState(false);
-
   const [cartItems, setCartItems] = useState([]);
+  const [searchValue, setSearchValue] = useState('');
+  const [favorites, setFavorites] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
-    fetch('https://60e375196c365a00178392c8.mockapi.io/items')
-      .then((res) => {
-        return res.json();
-      })
-      .then((json) => {
-        setItems(json);
-      });
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setIsLoading(true);
+
+        const [cartResponse, favoritesResponse, itemsResponse] = await Promise.all([
+          axios.get('https://60e375196c365a00178392c8.mockapi.io/cart'),
+          axios.get('https://60e375196c365a00178392c8.mockapi.io/favorites'),
+          axios.get('https://60e375196c365a00178392c8.mockapi.io/items'),
+        ]);
+        // const cartResponse = await axios.get('https://60e375196c365a00178392c8.mockapi.io/cart');
+        // const favoritesResponse = await axios.get(
+        //   'https://60e375196c365a00178392c8.mockapi.io/favorites',
+        // );
+        // const itemsResponse = await axios.get('https://60e375196c365a00178392c8.mockapi.io/items');
+
+        setIsLoading(false);
+        setCartItems(cartResponse.data);
+        setFavorites(favoritesResponse.data);
+        setItems(itemsResponse.data);
+      } catch (error) {
+        alert('Ошибка при запросе данных!');
+        console.error(error);
+      }
+    }
+
+    fetchData();
   }, []);
 
-  const onAddToCart = (obj) => {
-    // console.log(obj, 'onAddToCart');
-    setCartItems((prev) => [...prev, obj]);
+  const onAddToCart = async (obj) => {
+    try {
+      const findItem = cartItems.find((item) => Number(item.parentId) === Number(obj.id));
+      if (findItem) {
+        setCartItems((prev) => prev.filter((item) => Number(item.parentId) !== Number(obj.id)));
+        await axios.delete(`https://60e375196c365a00178392c8.mockapi.io/cart/${findItem.id}`);
+      } else {
+        setCartItems((prev) => [...prev, obj]);
+        const { data } = await axios.post('https://60e375196c365a00178392c8.mockapi.io/cart', obj);
+        setCartItems((prev) =>
+          prev.map((item) => {
+            if (item.parentId === data.parentId) {
+              return {
+                ...item,
+                id: data.id,
+              };
+            }
+            return item;
+          }),
+        );
+      }
+    } catch (error) {
+      alert('Ошибка при добавлении в корзину');
+      console.error(error);
+    }
+  };
+
+  const onChangeSearchInput = (event) => {
+    setSearchValue(event.target.value);
+  };
+
+  const onRemoveItems = async (id) => {
+    try {
+      await axios.delete(`https://60e375196c365a00178392c8.mockapi.io/cart/${id}`);
+      setCartItems((prev) => prev.filter((item) => Number(item.id) !== Number(id)));
+    } catch (error) {
+      alert('Ошика при удалении из корзины');
+      console.error(error);
+    }
+  };
+
+  const onAddToFavorite = async (obj) => {
+    try {
+      if (favorites.find((favObj) => Number(favObj.id) === Number(obj.id))) {
+        await axios.delete(`https://60e375196c365a00178392c8.mockapi.io/favorites/${obj.id}`);
+        setFavorites((prev) => prev.filter((item) => Number(item.id) !== Number(obj.id)));
+      } else {
+        const { data } = await axios.post(
+          'https://60e375196c365a00178392c8.mockapi.io/favorites',
+          obj,
+        );
+        setFavorites((prev) => [...prev, data]);
+      }
+    } catch (error) {
+      alert('Не удалось добавить в избраное');
+    }
+  };
+
+  const isItemAdded = (id) => {
+    return cartItems.some((obj) => Number(obj.parentId) === Number(id));
   };
 
   return (
-    <div className="wrapper clear">
-      {cartOpened && <Drawer items={cartItems} onClose={() => setCartOpened(false)} />}
-      <Header onClickCart={() => setCartOpened(true)} />
+    <AppContext.Provider
+      value={{
+        items,
+        cartItems,
+        favorites,
+        isItemAdded,
+        onAddToFavorite,
+        onAddToCart,
+        setCartOpened,
+        setCartItems,
+      }}>
+      <div className="wrapper clear">
+        <Drawer
+          items={cartItems}
+          onClose={() => setCartOpened(false)}
+          onRemove={onRemoveItems}
+          opened={cartOpened}
+        />
+        <Header onClickCart={() => setCartOpened(true)} />
 
-      <div className="content p-40">
-        <div className="d-flex align-center justify-between mb-40">
-          <h1>Все кроссовки</h1>
-          <div className="search-block">
-            <img src="/img/search.svg" alt="" />
-            <input type="text" placeholder="Поиск..." />
-          </div>
-        </div>
+        <Route path="/" exact>
+          <Home
+            items={items}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+            onChangeSearchInput={onChangeSearchInput}
+            onAddToCart={onAddToCart}
+            onAddToFavorite={onAddToFavorite}
+            isLoading={isLoading}
+          />
+        </Route>
 
-        <div className="d-flex flex-wrap">
-          {items.map((item) => {
-            return (
-              <Card
-                title={item.title}
-                price={item.price}
-                imageUrl={item.imageUrl}
-                onPlus={(obj) => {
-                  onAddToCart(obj);
-                }}
-                onFavorite={() => {
-                  console.log('Нажали на лайк');
-                }}
-              />
-            );
-          })}
-        </div>
+        <Route path="/favorites" exact>
+          <Favorites items={favorites} />
+        </Route>
+
+        <Route path="/orders" exact>
+          <Orders />
+        </Route>
       </div>
-    </div>
+    </AppContext.Provider>
   );
 }
 
